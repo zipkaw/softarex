@@ -17,11 +17,12 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
-from web_revenue.views import upload_csv, sign_in, update_name
+from web_revenue.views import upload_csv, sign_in, update_name, upload_from_form
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('revenue/', upload_csv, name='revenue'),
+    path('form_revenue/', upload_from_form, name='form-revenue'),
 ]
 
 urlpatterns += [

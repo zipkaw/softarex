@@ -17,8 +17,14 @@ from .lgb_model import Model1lgb
 from .rr_model import Model1RF
 from .lin_model import Model2Linear
 
-def prepare_test_data(test):
-    df_test = pd.read_csv(test)
+def prepare_test_data(test, format):
+    
+    if format == 'csv':
+        df_test = pd.read_csv(test)
+    if format == 'dict':
+        df_test = pd.DataFrame(test, index=[0])
+        df_test.rename(columns={'Open_Date': 'Open Date'}, inplace=True)
+        df_test.rename(columns={'City_Group': 'City Group'}, inplace=True)
 
     df_all = pd.concat([df_test],axis=0)
     df_all['Open Date'] = pd.to_datetime(df_all["Open Date"])
@@ -38,6 +44,7 @@ def prepare_test_data(test):
     return df_test
 
 def prepare_train_data(train):
+    
     df_trainval = pd.read_csv(train)
 
     y_trainval = df_trainval['revenue']

@@ -7,4 +7,27 @@
     {{ form.as_p }}
     <button type="submit">Update</button>
   </form>
+
+  {%for rest in  user_rests%}
+  <p>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-sm-2">
+                {{rest.City}}
+            </div>
+            <div class="col-sm-2">
+                {{rest.Open_Date}}
+            </div>
+            <div class="col-sm-2">
+              {{rest.Type}}
+          </div>
+          <div class="col-sm-2">
+            {{rest.City_Group}}
+        </div>
+        <div class="col-sm-2">
+          {{rest.revenue}}
+        </div>
+    </div>
+    </p>
+  {%endfor%}
 {% endblock %}

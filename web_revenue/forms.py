@@ -1,6 +1,8 @@
 from django import forms
 from django.core.exceptions import ValidationError
 
+from .models import RestaurantData
+
 class RegistryUser(forms.Form):
     username = forms.CharField(max_length=30, label='Your name')
     password = forms.CharField(max_length=50, label='Password', widget=forms.PasswordInput())
@@ -19,3 +21,11 @@ class CSVUploadForm(forms.Form):
 
 class UpdateNameForm(forms.Form):
     new_name = forms.CharField(label='New Name', max_length=100)
+
+class RestUploadForm(forms.ModelForm):
+    class Meta:
+        model = RestaurantData
+        exclude = (
+            'user',
+            'revenue'
+            )

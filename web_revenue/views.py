@@ -16,9 +16,9 @@ import joblib
 from .apps import WebRevenueConfig
 from .models import RestaurantData, UploadedFile
 from model.revenue_predictor import *
-from .forms import CSVUploadForm, RegistryUser
+from .forms import CSVUploadForm, RegistryUser, RestUploadForm
 
-def prediction(data_to_predict):
+def prediction(data_to_predict, format):
 
     ml_models = {
         'KNeighbors':joblib.load('./model1knn.pkl'),
@@ -26,7 +26,7 @@ def prediction(data_to_predict):
         'LightGBM': joblib.load('./model1lgb.pkl'),
         'Linear': joblib.load('./model2.pkl'),
     }
-    data = prepare_test_data(data_to_predict)
+    data = prepare_test_data(data_to_predict, format)
     return predict_revenue(ml_models.pop('Linear'), ml_models, data)
 
 def to_csv(self, filepath, data):
@@ -48,11 +48,8 @@ def upload_csv(request):
             csv_file = request.FILES['csv_file']
             uploaded_file = UploadedFile(file=csv_file)    
             uploaded_file.save()  
-            # # write_file('/home/plantator/revenue_predict/web_app_files/content.csv', str(csv_file.read()))
-            # revenue = WebRevenueConfig.prediction(os.path.join('./web_app_files', csv_file.name))
             file_path = './web_app_files/response_file.csv'
-
-            revenue = prediction(os.path.join('./web_app_files', csv_file.name))
+            revenue = prediction(os.path.join('./web_app_files', csv_file.name), 'csv')
             save_to_csv(revenue, file_path)
             with open(file_path, 'r') as file:
                 response = FileResponse(file.read(), as_attachment=True)
@@ -63,6 +60,25 @@ def upload_csv(request):
         form = CSVUploadForm(request.FILES)
 
     return render(request, 'revenue.html', {'form': form})
+
+@login_required
+def upload_from_form(request):
+    if request.method == 'POST':
+        form = RestUploadForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            rest_data = RestaurantData(**form.cleaned_data, user=user)
+            
+            for i in range(1,38):
+                form.cleaned_data[f'P{i}'] = float(form.cleaned_data[f'P{i}'])
+
+            revenue = prediction(form.cleaned_data, 'dict')
+            rest_data.revenue = round(int(revenue[0]), 1)
+            rest_data.save()
+            return render(request, 'form_revenue.html', {'form': form, 'revenue':revenue})
+    else:
+        form = RestUploadForm(request.POST)
+    return render(request, 'form_revenue.html', {'form': form, 'revenue':0})
 
 def sign_in(request): 
     
@@ -75,7 +91,6 @@ def sign_in(request):
                 password=register_user.cleaned_data['password'], 
             )                   
             user.save()
-
             return HttpResponseRedirect(reverse('revenue'))
     else: 
         register_user = RegistryUser()
@@ -88,6 +103,7 @@ def sign_in(request):
 
 @login_required
 def update_name(request):
+    rests = RestaurantData.objects.filter(user=request.user)
     if request.method == 'POST':
         form = UpdateNameForm(request.POST)
         if form.is_valid():
@@ -98,4 +114,4 @@ def update_name(request):
             return redirect('profile')
     else:
         form = UpdateNameForm()
-    return render(request, 'update_name.html', {'form': form})
+    return render(request, 'update_name.html', {'form': form, 'user_rests':rests.values()})
